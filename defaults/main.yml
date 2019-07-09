@@ -1,1 +1,34 @@
 # Defaults variables for role mirror-buildlogs
+
+# default path where to sync content to
+mirror_buildlogs_local_path: /home/centos-buildlogs/
+
+# Default user owning all the files
+mirror_buildlogs_local_user: centos
+
+# From which node do we want to rsync from
+mirror_buildlogs_rsync_from: main.centos.org
+
+# Do we want to redirect to CDN
+mirror_buildlogs_cdn_redirect: True
+mirror_buildlogs_cdn_master: my.main.master.centos.org # Vhost that CDN will fetch from
+mirror_buildlogs_cdn_redirect_to: https://cdn.centos.org
+
+# Apache rewrite rules - to be overridden by inventory
+# Simple "block" that will be added to httpd, so one rule per line
+# This is so just an example
+mirror_buildlogs_rewrite_rules: |
+  RewriteRule "^/rolling/7/isos/x86_64/CentOS-7-x86_64-DVD.iso" "-" [F,L]
+  RewriteCond %{HTTP_USER_AGENT} '^Mozilla/5.0 \(Windows NT 6.1; WOW64; rv:40.0\) Gecko/20100101 Firefox/40.1'
+  RewriteRule "^/(.*)/(.*\.iso)$" "-" [F,L]
+
+# using mod_ratelimit on httpd to limit bw usage?
+mirror_buildlogs_mod_ratelimit: True
+mirror_buildlogs_rate_limit: 536
+
+# Zabbix/monitoring part
+mirror_buildlogs_zabbix_templates: []
+
+mirror_buildlogs_zabbix_groups:
+  - CentOS buildlogs mirrors
+

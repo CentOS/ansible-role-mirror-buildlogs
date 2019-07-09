@@ -1,1 +1,50 @@
-# Defaults tasks for role mirror-buildlogs
+- include_tasks: mirror-user.yml
+
+- import_role:
+    name: httpd
+  vars:
+    httpd_tls: True
+
+- import_role:
+    name: httpd
+    tasks_from: pki-tls
+  vars:
+    pki_hostname: buildlogs.centos.org
+  tags:
+    - tls
+
+- name: Adding vhost file
+  template:
+    src: "{{ item }}.j2"
+    dest: "/etc/httpd/conf.d/{{ item }}"
+  with_items:
+    - 25_buildlogs.conf
+    - ssl-buildlogs.conf
+  notify:
+    - restart_httpd
+
+- name: Ensuring some selinux booleans are enabled
+  seboolean:
+    name: "{{ item }}"
+    persistent: yes
+    state: yes
+  with_items:
+    - httpd_enable_homedirs
+    - httpd_read_user_content
+
+- name: Script to gather mirror content
+  template:
+    src: rsync-master-buildlogs.j2
+    dest: "/home/{{ mirror_buildlogs_local_user }}-scripts/rsync-master-buildlogs"
+    mode: 0755
+
+- name: Cron job to rsync content from upstream node
+  cron:
+    name: "CentOS mirror buildlogs rsync job"
+    job: "/home/{{ mirror_buildlogs_local_user }}-scripts/rsync-master-buildlogs {{ mirror_buildlogs_rsync_from }} > /dev/null 2>&1"
+    minute: "*/13"
+    user: "{{ mirror_buildlogs_local_user }}"
+  tags:
+    - cron
+
+- include_tasks: monitoring.yml  

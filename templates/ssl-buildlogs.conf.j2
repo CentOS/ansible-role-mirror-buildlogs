@@ -1,0 +1,88 @@
+<VirtualHost *:443>
+ ServerAdmin webmaster@centos.org
+ ServerName buildlogs.centos.org
+ DocumentRoot {{ mirror_buildlogs_local_path }}
+ ReadmeName /FOOTER.html
+ HeaderName /HEADER_AD.html
+ IndexIgnore .??* *~ *# HEADER* README* RCS CVS *,v *,t FOOTER.html
+
+ Header always set Strict-Transport-Security "max-age=31536000"
+ Header always set X-Xss-Protection "1; mode=block"
+ Header always set X-Content-Type-Options "nosniff"
+ Header always set Referrer-Policy "same-origin"
+ Header always set X-Frame-Options "SAMEORIGIN"
+
+{% if mirror_buildlogs_mod_ratelimit %}
+# Spam rate-limit for bw usage
+<IfVersion >= 2.4>
+ LoadModule ratelimit_module modules/mod_ratelimit.so
+  <Location "/">
+    SetOutputFilter RATE_LIMIT
+    SetEnv rate-limit {{ mirror_buildlogs_rate_limit }}
+    SetEnv rate-initial-burst {{ mirror_buildlogs_rate_limit * 1.5 }}
+  </Location>
+</IfVersion>
+{% endif %}
+
+ RewriteEngine on
+
+{{ mirror_buildlogs_rewrite_rules }}
+
+{% if mirror_buildlogs_cdn_redirect %}
+ # Redirecting to CDN, as defined in ansible
+ ReWriteRule "^/(.*)/(.*\.rpm)$" {{ mirror_buildlogs_cdn_redirect_to }}/$1/$2
+ #ReWriteRule "^/(.*)/(.*\.iso)$" {{ mirror_buildlogs_cdn_redirect_to }}/$1/$2
+ ReWriteRule "^/(.*)/(.*\.qcow2)$" {{ mirror_buildlogs_cdn_redirect_to }}/$1/$2
+ ReWriteRule "^/(.*)/(.*\.qcow2\.gz)$" {{ mirror_buildlogs_cdn_redirect_to }}/$1/$2
+ ReWriteRule "^/(.*)/(.*\.qcow2\.xz)$" {{ mirror_buildlogs_cdn_redirect_to }}/$1/$2
+ ReWriteRule "^/(.*)/(.*\.tar)$" {{ mirror_buildlogs_cdn_redirect_to }}/$1/$2
+ ReWriteRule "^/(.*)/(.*\.box)$" {{ mirror_buildlogs_cdn_redirect_to }}/$1/$2
+ ReWriteRule "^/(.*)/(.*\.box\.xz)$" {{ mirror_buildlogs_cdn_redirect_to }}/$1/$2
+ ReWriteRule "^/(.*)/(.*\.img)$" {{ mirror_buildlogs_cdn_redirect_to }}/$1/$2
+ ReWriteRule "^/(.*)/(.*\.img\.xz)$" {{ mirror_buildlogs_cdn_redirect_to }}/$1/$2
+ ReWriteRule "^/(.*)/(.*\.raw)$" {{ mirror_buildlogs_cdn_redirect_to }}/$1/$2
+{% endif %}
+
+<Location "/.well-known/">
+    ProxyPass "http://cephas.centos.org/.well-known/"
+</Location>
+
+
+#Directory Permissions
+ <Directory "{{ mirror_buildlogs_local_path }}">
+  AllowOverride Indexes
+  Options Indexes FollowSymLinks 
+  <IfVersion < 2.4>
+    Order allow,deny
+    Allow from all
+  </IfVersion>
+  <IfVersion >= 2.4>
+    IndexOptions FancyIndexing VersionSort NameWidth=* HTMLTable Charset=UTF-8
+    Require all granted
+  </IfVersion>
+ </Directory>
+
+ErrorLog logs/ssl-buildlogs.centos.org_error.log
+TransferLog logs/ssl-buildlogs.centos.org_access.log
+LogLevel warn
+SSLEngine on
+SSLHonorCipherOrder on
+SSLProtocol all -SSLv2 -SSLv3
+SSLCipherSuite ALL:!ADH:!EXPORT:!SSLv2:RC4+RSA:+HIGH:+MEDIUM:+LOW:!aNULL:!eNULL:!DES:!MD5:!PSK:!RC4
+SSLCertificateFile /etc/pki/tls/certs/buildlogs.centos.org.crt
+SSLCertificateKeyFile /etc/pki/tls/private/buildlogs.centos.org.key
+SSLCertificateChainFile /etc/pki/tls/certs/buildlogs.centos.org-CAChain.crt
+<Files ~ "\.(cgi|shtml|phtml|php3?)$">
+    SSLOptions +StdEnvVars
+</Files>
+<Directory "/var/www/cgi-bin">
+    SSLOptions +StdEnvVars
+</Directory>
+SetEnvIf User-Agent ".*MSIE.*" \
+         nokeepalive ssl-unclean-shutdown \
+         downgrade-1.0 force-response-1.0
+CustomLog logs/ssl-buildlogs.centos.org_request.log \
+          "%t %h %{SSL_PROTOCOL}x %{SSL_CIPHER}x \"%r\" %b"
+</VirtualHost>                               
+
+

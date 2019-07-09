@@ -1,0 +1,70 @@
+<VirtualHost *:80>
+ ServerAdmin webmaster@centos.org
+ ServerName buildlogs.centos.org
+ CustomLog logs/buildlogs.centos.org_access.log combined
+ ErrorLog logs/buildlogs.centos.org_error.log
+ DocumentRoot {{ mirror_buildlogs_local_path }}
+ AddDescription "{{ inventory_hostname }}" server.id
+ ReadmeName /FOOTER.html
+ HeaderName /HEADER_AD.html
+ IndexIgnore .??* *~ *# HEADER* README* RCS CVS *,v *,t FOOTER.html
+
+ # Rewrite Rules coming from Ansible/inventory
+ RewriteEngine On
+
+{{ mirror_buildlogs_rewrite_rules }}
+
+ #Redirecting to https now
+ RewriteCond $1 !^.well-known
+ RewriteCond %{HTTPS} !=on
+ RewriteRule ^/?(.*) https://buildlogs.centos.org/$1 [R,L]
+
+<Location "/.well-known/">
+    ProxyPass "http://cephas.centos.org/.well-known/"
+</Location>
+
+#Directory Permissions
+ <Directory "{{ mirror_buildlogs_local_path }}/">
+  AllowOverride Indexes
+  Options Indexes FollowSymLinks 
+  <IfVersion < 2.4>
+    Order allow,deny
+    Allow from all
+  </IfVersion>
+  <IfVersion >= 2.4>
+    IndexOptions FancyIndexing VersionSort NameWidth=* HTMLTable Charset=UTF-8
+    Require all granted
+  </IfVersion>
+ </Directory>
+
+</VirtualHost>
+
+{% if mirror_buildlogs_cdn_redirect %}
+# Now the specific vhost for cdn backend, not publicly known
+<VirtualHost *:80>
+ ServerAdmin webmaster@centos.org
+ ServerName {{ mirror_buildlogs_cdn_master }}
+ CustomLog logs/{{ mirror_buildlogs_cdn_master }}_access.log combined
+ ErrorLog logs/{{ mirror_buildlogs_cdn_master }}_error.log
+ DocumentRoot {{ mirror_buildlogs_local_path }}
+ AddDescription "{{ inventory_hostname }}" server.id
+ ReadmeName /FOOTER.html
+ HeaderName /HEADER_AD.html
+ IndexIgnore .??* *~ *# HEADER* README* RCS CVS *,v *,t FOOTER.html
+
+#Directory Permissions
+ <Directory "{{ mirror_buildlogs_local_path }}">
+  AllowOverride Indexes
+  Options Indexes FollowSymLinks 
+  <IfVersion < 2.4>
+    Order allow,deny
+    Allow from all
+  </IfVersion>
+  <IfVersion >= 2.4>
+    IndexOptions FancyIndexing VersionSort NameWidth=* HTMLTable Charset=UTF-8
+    Require all granted
+  </IfVersion>
+ </Directory>
+
+</VirtualHost>
+{% endif %}
