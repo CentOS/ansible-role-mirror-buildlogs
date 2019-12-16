@@ -2,8 +2,8 @@
  ServerAdmin webmaster@centos.org
  ServerName buildlogs.centos.org
  DocumentRoot {{ mirror_buildlogs_local_path }}
- ReadmeName /FOOTER.html
- HeaderName /HEADER_AD.html
+ #ReadmeName /centos-design/footer.html
+ HeaderName /centos-design/header-centos-buildlogs-mirror.html
  IndexIgnore .??* *~ *# HEADER* README* RCS CVS *,v *,t FOOTER.html
 
  Header always set Strict-Transport-Security "max-age=31536000"
@@ -57,7 +57,8 @@
     Allow from all
   </IfVersion>
   <IfVersion >= 2.4>
-    IndexOptions FancyIndexing VersionSort NameWidth=* HTMLTable Charset=UTF-8
+    IndexOptions NameWidth=* 
+    IndexStyleSheet "/centos-design/css/centos-listindex.css"
     Require all granted
   </IfVersion>
  </Directory>

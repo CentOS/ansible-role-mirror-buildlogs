@@ -4,6 +4,8 @@
     name: httpd
   vars:
     httpd_tls: True
+    httpd_html_autoindex_title: "CentOS Buildlogs mirror"
+    httpd_html_autoindex_content: "{{ buildlogs_httpd_header }}"
 
 - import_role:
     name: httpd
