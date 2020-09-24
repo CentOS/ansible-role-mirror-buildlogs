@@ -45,7 +45,7 @@
   cron:
     name: "CentOS mirror buildlogs rsync job"
     job: "/home/{{ mirror_buildlogs_local_user }}-scripts/rsync-master-buildlogs {{ mirror_buildlogs_rsync_from }} > /dev/null 2>&1"
-    minute: "*/13"
+    minute: "*/5"
     user: "{{ mirror_buildlogs_local_user }}"
   tags:
     - cron
