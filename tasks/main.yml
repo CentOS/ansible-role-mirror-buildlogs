@@ -34,6 +34,7 @@
   with_items:
     - httpd_enable_homedirs
     - httpd_read_user_content
+    - httpd_can_network_connect
 
 - name: Script to gather mirror content
   template:
