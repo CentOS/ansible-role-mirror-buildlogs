@@ -27,13 +27,16 @@ mirror_buildlogs_mod_ratelimit: True
 mirror_buildlogs_rate_limit: 536
 
 # Header file for httpd autoindex
-buildlogs_httpd_header: |
-  <div class="alert alert-warning" role="alert">
-  This server contains a mix of raw/unsigned packages and/or build logs <br>
-  It should be used mainly for testing purposes<br>
-  Please see this <a href="http://www.centos.org/download">link</a> for current versions of CentOS Linux/Stream
-  </div>
-
+mirror_buildlogs_header_page:
+  title: 'CentOS Buildlogs Mirror'
+  title_lead: ''
+  with_manifestation: 'CentOS Buildlogs Mirror'
+  with_content:
+    - element: p
+      element_class: alert alert-warning
+      element_content: >-
+        This server contains a mix of raw/unsigned packages and/or build logs <br>
+        It should be used mainly for testing purposes<br>
 
 
 # Zabbix/monitoring part
